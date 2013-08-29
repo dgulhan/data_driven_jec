@@ -102,8 +102,8 @@ for(int i=0;i<npthat;i++){
  int nentries = t[i]->GetEntriesFast();
  cout<<"nentries " << nentries << " for pthat "<<pthat[i]<<endl;
 
-// for (Long64_t jentry=0; jentry<nentries;jentry++) {
-for (Long64_t jentry=0; jentry<100;jentry++) {
+for (Long64_t jentry=0; jentry<nentries;jentry++) {
+// for (Long64_t jentry=0; jentry<100;jentry++) {
   t[i]->GetEntry(jentry); 
   fhi[i]->GetEntry(jentry);
   float pt1=-99;

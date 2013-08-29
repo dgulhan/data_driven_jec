@@ -83,8 +83,8 @@ TNtuple *ntdijet = new TNtuple("ntdijet","",dijetVars.data());
 TNtuple *ntjet = new TNtuple("ntjet","",jetVars.data());
 TNtuple *ntdijet_corr = new TNtuple("ntdijet_corr","",dijetVars.data());
 
-// for (Long64_t jentry=0; jentry<nentries;jentry++) {
-for (Long64_t jentry=0; jentry<1000;jentry++) {
+for (Long64_t jentry=0; jentry<nentries;jentry++) {
+// for (Long64_t jentry=0; jentry<1000;jentry++) {
   t->GetEntry(jentry); 
   fhi->GetEntry(jentry);
   fhlt->GetEntry(jentry);
