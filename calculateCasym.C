@@ -1,19 +1,17 @@
 #include "relativeResponse_MC.C"
 
-void calculateCasym(){
+void calculateCasym(char *dataset="jet80",int ptlow = 100,int pthigh = 140){
 TH1D::SetDefaultSumw2();
 double etacut=3;
 double phicut=2.5;
-int docorrection =1;
-char *mode="pPb";//"pPb","pp","Pbp";
-char *algo="akPu3PF";
+int docorrection =0;
+char *mode="Pbp";//"pPb","pp","Pbp";
+char *algo="ak3PF";
 TString infile;
-char *dataset="jet40";//jet80,MB;
 char *binning="double_hcalbins";//"hcalbins"
 double alphacut_low=0;
 double alphacut_high=0.2;
-int ptlow = 40;
-int pthigh = 300;
+
 
 TFile *f_mc = new TFile(Form("ntuples/ntuple_relativeResponse_MC_%s_eta%d_algo%s.root",mode,(int)etacut,algo));
 TFile *f_data = new TFile(Form("ntuples/ntuple_relativeResponse_%s_eta%d_corrected%d_%s_%s.root",mode,(int)etacut,docorrection,dataset,algo));
@@ -27,6 +25,9 @@ cout<<5<<endl;
 int netabins;
 if(binning=="double_hcalbins") netabins=28;
 if(binning=="hcalbins") netabins=58;
+if(binning=="10bins") netabins=10;
+if(binning=="9bins") netabins=9;
+if(binning=="6bins") netabins=6;
 double etabins[netabins];
 double etabins_hcalbins[]= {-3, -2.853,
                      -2.650, -2.500, -2.322, -2.172, -2.043, -1.930, -1.830,
@@ -39,7 +40,9 @@ double etabins_hcalbins[]= {-3, -2.853,
                       1.930,  2.043,  2.172,  2.322,  2.500,  2.650,  2.853,
                       3};
 double etabins_double_hcalbins[]= {-3,-2.500,  -2.172, -1.930,-1.740,  -1.566, -1.392,  -1.218,-1.044,  -0.879,  -0.696,-0.522,  -0.348,  -0.174,  0.000,0.174,  0.348,    0.522,0.696,   0.879,   1.044,   1.218,1.392,   1.566,   1.740,1.930,   2.172,   2.500,   3};
-
+double etabins_10bins[] = {-3, -1.740,   -1.044,    -0.696,  -0.348,  0.000, 0.348,    0.696,      1.044,     1.740,    3};
+double etabins_6bins[] = {-3, -1.740,   -1.044,     -0.348,   0.348,       1.044,     1.740,    3};
+double etabins_9bins[] = {-3, -2,   -1.3,   -0.8,  -0.4,   0.4,     0.8,  1.3,     2,    3};
                       
 for(int i=0;i<netabins+1;i++){
  if(binning=="hcalbins"){
@@ -48,6 +51,18 @@ for(int i=0;i<netabins+1;i++){
  }
  if(binning=="double_hcalbins"){
   etabins[i]=etabins_double_hcalbins[i];
+  cout<<etabins[i]<<endl;
+ }
+ if(binning=="10bins"){
+  etabins[i]=etabins_10bins[i];
+  cout<<etabins[i]<<endl;
+ }
+ if(binning=="6bins"){
+  etabins[i]=etabins_6bins[i];
+  cout<<etabins[i]<<endl;
+ }
+ if(binning=="9bins"){
+  etabins[i]=etabins_9bins[i];
   cout<<etabins[i]<<endl;
  }
 }
@@ -61,24 +76,30 @@ TProfile *B_data = new TProfile("B_data","",netabins,etabins);
 TProfile *B_corr = new TProfile("B_corr","",netabins,etabins);
   cout<<5<<endl;
 
-nt_mc->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_mc",Form("weight*(ptAverage>%d && ptAverage<%d && alpha>=%.2f && alpha<%.2f && dphi>2.5)",ptlow,pthigh,alphacut_low,alphacut_high));
+nt_mc->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_mc",Form("weight*(ptAverage>%d && ptAverage<%d && ( (jtpt3>0 && (alpha>=%.2f && alpha<%.2f)) || (jtpt3<0)) && dphi>2.5 && pthat>%d)",ptlow,pthigh,alphacut_low,alphacut_high,(ptlow-10)));
+// nt_mc->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_mc",Form("weight*(ptAverage>%d && ptAverage<%d && dphi>%.2f && pthat>%d)",ptlow,pthigh,alphacut_low,alphacut_high,(ptlow-10),phicut));
   cout<<6<<endl;
 
-nt_data->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_data",Form("ptAverage>%d && ptAverage<%d && alpha>=%.2f && alpha<%.2f  && dphi>2.5",ptlow,pthigh,alphacut_low,alphacut_high));
+nt_data->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_data",Form("ptAverage>%d && ptAverage<%d && ((jtpt3>0 && (alpha>=%.2f && alpha<%.2f)) || (jtpt3<0)) && dphi>%.2f",ptlow,pthigh,alphacut_low,alphacut_high,phicut));
+// nt_data->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_data",Form("ptAverage>%d && ptAverage<%d && (alpha>=%.2f && alpha<%.2f) && dphi>%.2f",ptlow,pthigh,alphacut_low,alphacut_high,phicut));
   cout<<7<<endl;
 
 TH1D * etaprobe_mc = new TH1D("etaprobe_mc","",netabins,etabins);
 TH1D * etaprobe_data = new TH1D("etaprobe_data","",netabins,etabins);
 TH1D * etaprobe_corr = new TH1D("etaprobe_corr","",netabins,etabins);
-nt_mc->Draw("etaProbe>>etaprobe_mc",Form("weight*(ptAverage>%d && ptAverage<%d && alpha>=%.2f && alpha<%.2f && dphi>2.5)",ptlow,pthigh,alphacut_low,alphacut_high));
-nt_data->Draw("etaProbe>>etaprobe_data",Form("ptAverage>%d && ptAverage<%d && alpha>=%.2f && alpha<%.2f && dphi>2.5",ptlow,pthigh,alphacut_low,alphacut_high));
-
+TH1D * h_pt_ave = new TH1D("h_pt_ave","",20,ptlow,pthigh);
+// nt_mc->Draw("etaProbe>>etaprobe_mc",Form("weight*(ptAverage>%d && ptAverage<%d && ((jtpt3>0 && (alpha>=%.2f && alpha<%.2f)) || (jtpt3<0)) && dphi>2.5)",ptlow,pthigh,alphacut_low,alphacut_high));
+nt_mc->Draw("etaProbe>>etaprobe_mc",Form("weight*(ptAverage>%d && ptAverage<%d && dphi>%.2f)",ptlow,pthigh,alphacut_low,alphacut_high,phicut));
+nt_data->Draw("etaProbe>>etaprobe_data",Form("ptAverage>%d && ptAverage<%d && ((jtpt3>0 && (alpha>=%.2f && alpha<%.2f)) || (jtpt3<0))&& dphi>%.2f",ptlow,pthigh,alphacut_low,alphacut_high,phicut));
+nt_data->Draw("ptAverage>>h_pt_ave");
 TH1D * R_mc = new TH1D("R_mc","",netabins,etabins);
 TH1D * R_data = new TH1D("R_data","",netabins,etabins);
 TH1D * R_corr;
 if(docorrection){
- nt_corr->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_corr",Form("ptAverage>%d && ptAverage<%d && alpha>=%.2f && alpha<%.2f && dphi>2.5",ptlow,pthigh),"prof");
- nt_corr->Draw("etaProbe>>etaprobe_corr",Form("ptAverage>%d && ptAverage<%d && alpha>=%.2f && alpha<%.2f && dphi>2.5",ptlow,pthigh));
+ nt_corr->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_corr",Form("ptAverage>%d && ptAverage<%d && ((jtpt3>0 && (alpha>=%.2f && alpha<%.2f)) || (jtpt3<0))  && dphi>%.2f",ptlow,pthigh,alphacut_low,alphacut_high,phicut),"prof");
+ // nt_corr->Draw("(ptProbe-ptBarrel)/ptAverage:etaProbe>>B_corr",Form("ptAverage>%d && ptAverage<%d && (alpha>=%.2f && alpha<%.2f) && dphi>%.2f",ptlow,pthigh,alphacut_low,alphacut_high,phicut),"prof");
+ nt_corr->Draw("etaProbe>>etaprobe_corr",Form("ptAverage>%d && ptAverage<%d && ((jtpt3>0 && (alpha>=%.2f && alpha<%.2f)) || (jtpt3<0)) && dphi>%.2f",ptlow,pthigh,alphacut_low,alphacut_high,phicut));
+ // nt_corr->Draw("etaProbe>>etaprobe_corr",Form("ptAverage>%d && ptAverage<%d && (alpha>=%.2f && alpha<%.2f) && dphi>%.2f",ptlow,pthigh,alphacut_low,alphacut_high,phicut));
  R_corr = new TH1D("R_corr","",netabins,etabins);
 }
 
@@ -180,9 +201,20 @@ drawText("|#Delta#phi_{1,2}|>2.5",0.2,0.77);
 drawText(Form("%d<p_{T,ave}<%d GeV/c",ptlow,pthigh),0.2,0.71);
 c3->SaveAs(Form("plots/ratios_%s_%s_%s_%s.png",mode,binning,algo,dataset));
 c3->SaveAs(Form("plots/ratios_%s_%s_%s_%s.pdf",mode,binning,algo,dataset));
-TFile *outf = new TFile(Form("Corrections/Casym_%s_%s_algo_%s_pt%d_%d_%s.root",mode,binning,algo,ptlow,pthigh,dataset),"recreate");
+TFile *outf = new TFile(Form("Corrections/Casym_%s_%s_algo_%s_pt%d_%d_%s_alphahigh_%d_phicut%d.root",mode,binning,algo,ptlow,pthigh,dataset,(int)(alphacut_high*(100)),(int)(phicut*100)),"recreate");
+// TFile *outf = new TFile(Form("Corrections/Casym_%s_%s_algo_%s_pt%d_%d_%s_alphahigh_%d_Sep17.root",mode,binning,algo,ptlow,pthigh,dataset,(int)(alphacut_high*(100))),"recreate");
 C_asym->Write();
 R_data->Write();
 R_mc->Write();
+h_pt_ave->Write();
 outf->Close();
+f_mc->Close();
+f_data->Close();
+
+// TFile *outf2 = new TFile(Form("Closure/Casym_%s_%s_algo_%s_pt%d_%d_%s_alphahigh_%d_Sep17.root",mode,binning,algo,ptlow,pthigh,dataset,(int)(alphacut_high*100)),"recreate");
+// R_data_MC_corr->Write();
+// R_corr->Write();
+// R_mc->Write();
+// R_data->Write();
+// outf2->Close();
 }

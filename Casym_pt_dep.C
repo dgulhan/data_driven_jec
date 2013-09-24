@@ -24,16 +24,12 @@
 #include "/d102/dgulhan/PA2013Analysis/Dijet/d0127/plotFigure.C"
 
 void Casym_pt_dep(){
-// const int nfile = 4;
-// int ptlow[nfile]={40,60,80,100};
-// int pthigh[nfile]={60,80,100,140};
+char *mode="pPb";//"pPb","pp","Pbp";
+char *algo="akPu3PF";
 const int nfile = 2;
-// int ptlow[nfile]={20,30,20,40,40};
-// int pthigh[nfile]={30,40,40,300,300};
 int ptlow[nfile]={40,40};
 int pthigh[nfile]={300,300};
-// int ptlow[nfile]={20,40,70,100};
-// int pthigh[nfile]={40,70,100,140};
+
 
 TFile *file[nfile];
 TH1D *Casym[nfile];

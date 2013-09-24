@@ -30,9 +30,9 @@ TH1D::SetDefaultSumw2();
 
 double etacut=3;
 double phicut=2.5;
-char *mode="pPb";//"pPb","pp","Pbp";
-char *algo="akPu3PF";
-int npthat;
+char *mode="Pbp";//"pPb","pp","Pbp";
+char *algo="ak3PF";
+int npthat; 
 int pthat[10]={15,30,50,80,120,170,220,280,370,9999};
 float w[9];
 float w_pPb[] = {0.160697,0.0116103,0.00106034,0.000126209,2.34734e-05,3.21927e-06,6.28969e-07,2.02126e-07,5.73344e-08};//pPb

@@ -230,7 +230,7 @@ public :
 akPu3PF_MC::akPu3PF_MC(TString infile, char *algo, TTree *tree)
 {
    f = TFile::Open(infile);
-   tree = (TTree*) f->Get("akPu3PFJetAnalyzer/t");
+   tree = (TTree*) f->Get(Form("%sJetAnalyzer/t",algo));
    // tree = (TTree*) f->Get("ak3PFJetAnalyzer/t");
    // fhi = new HiTree(infile);
    // fhlt = new HltTree(infile);

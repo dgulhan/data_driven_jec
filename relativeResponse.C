@@ -31,17 +31,18 @@ TH1D::SetDefaultSumw2();
 
 double etacut=3;
 double phicut=2.5;
-int docorrection =1;
-char *mode="pPb";//"pPb","pp","Pbp";
-char *algo="akPu3PF";
+int docorrection =0;
+char *mode="Pbp";//"pPb","pp","Pbp";
+char *algo="ak3PF";
 TString infile;
-char *dataset="jet40";//jet80,MB;
+char *dataset="jet80";//jet80,MB;
 if(mode=="pPb" && dataset=="jet80") infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_JSonPPb_forestv77.root";
 if(mode=="pPb" && dataset=="jet40")infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_JSonPPb_forestv72_HLT40_HLT60.root";
 if(mode=="pPb" && dataset=="MB") infile="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_KrisztianMB_JSonPPb_forestv84.root";
 // TString infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_KrisztianMB_JSonPPb_forestv84.root";
-if(mode=="pp" && dataset=="jet40")TString infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pp2013/promptReco/PP2013_HiForest_PromptReco_JSon_Jet40Jet60_ppTrack_forestv84.root";
-if(mode=="pp" && dataset=="jet80")TString infile ="root://eoscms//eos/cms/store/caf/user/yjlee//pp2013/promptReco/PP2013_HiForest_PromptReco_JsonPP_Jet80_PPReco_forestv82.root";
+if(mode=="pp" && dataset=="jet40") infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pp2013/promptReco/PP2013_HiForest_PromptReco_JSon_Jet40Jet60_ppTrack_forestv84.root";
+if(mode=="pp" && dataset=="MB") infile ="root://eoscms//eos/cms/store/group/phys_heavyions/dgulhan/pp_minbiasSkim_forest_53x_2013-08-15-0155/pp_minbiasSkim_forest_53x_2013-08-15-0155.root";
+if(mode=="pp" && dataset=="jet80") infile ="root://eoscms//eos/cms/store/caf/user/yjlee//pp2013/promptReco/PP2013_HiForest_PromptReco_JsonPP_Jet80_PPReco_forestv82.root";
 if(mode=="Pbp" && dataset=="jet80")infile ="/d100/yjlee/hiForest2PPb/promptReco/Jet-Pbp-v84-JECdb/output.root";
 
 HiTree   *fhi = new HiTree(infile.Data());
@@ -52,9 +53,11 @@ akPu3PF *t = new akPu3PF(infile.Data(),algo);
 TFile * fcrel3;
 TH1D * C_rel;
 if(docorrection){
- if(etacut==3 && mode=="pPb") fcrel3 = new TFile("Corrections/Casym_pPb_Jul17_hcalbins.root");
+ if(etacut==3 && mode=="pPb" && algo=="akPu3PF") fcrel3 = new TFile("Corrections/Casym_pPb_double_hcalbins_algo_akPu3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
+ if(etacut==3 && mode=="pPb" && algo=="ak3PF") fcrel3 = new TFile("Corrections/Casym_pPb_double_hcalbins_algo_ak3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
  if(etacut==4 && mode=="pPb")fcrel3 = new TFile("Corrections/Casym_eta4.root");
- if(etacut==3 && mode=="pp")fcrel3 = new TFile("Corrections/Casym_pp_Aug26_double_hcalbins_pt60_80.root");
+ if(etacut==3 && mode=="pp" && algo=="ak3PF")fcrel3 = new TFile("Corrections/Casym_pp_double_hcalbins_algo_ak3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
+ if(etacut==3 && mode=="pp" && algo=="akPu3PF")fcrel3 = new TFile("Corrections/Casym_pp_double_hcalbins_algo_akPu3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
  C_rel=(TH1D*)fcrel3->Get("C_asym");
 }
 
@@ -62,11 +65,15 @@ if(docorrection){
 TF1 *f;
 if(algo=="ak3PF") f= new TF1("f","1");
 if(algo=="akPu3PF"){
- f= new TF1("f","[0]/pow(x,[1])");
- f->SetParameters(0.937820,-0.0111559);
+ if(mode=="pp") f= new TF1("f","1");
+ if(mode=="pPb" || mode=="Pbp"){
+  f= new TF1("f","[0]/pow(x,[1])");
+  f->SetParameters(0.937820,-0.0111559);
+ }
 }
 
 int nentries = t->GetEntriesFast();
+cout<<"nentries = "<<nentries<<endl;
 
 string jetVars="";
 string dijetVars = "";
@@ -148,7 +155,10 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
    if(t->jteta[ijet]<-3) hasMForwardjet =true;
    if(t->jteta[ijet]>3) hasPForwardjet =true;
    if(fabs(t->jteta[ijet])>3) continue;
+   if(t->rawpt[ijet]<15) continue;
+
    njet++;
+   cout<<"event with jet"<<njet<<endl;
    double correctedpt = (f->Eval(t->jtpt[ijet]))*t->jtpt[ijet];
    jets.push_back(std::make_pair(correctedpt,std::make_pair(t->jteta[ijet], std::make_pair(t->jtphi[ijet],t->trackMax[ijet]))));
    double corr;
@@ -159,6 +169,7 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
    }
    ntjet->Fill(correctedpt,t->jteta[ijet],t->jtphi[ijet]);
   }
+  // cout<<njet<<endl;
   if(njet != 0){
    std::sort(jets.begin(),jets.end());
    std::sort(jets_corr.begin(),jets_corr.end());
@@ -167,26 +178,32 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
    eta1 = jets[njet-1].second.first;
    phi1 = jets[njet-1].second.second.first;
    trkmax1 = jets[njet-1].second.second.second;
-   pt1w = jets_corr[njet-1].first;
-   eta1w = jets_corr[njet-1].second.first;
-   phi1w = jets_corr[njet-1].second.second.first;
-   trkmax1w = jets_corr[njet-1].second.second.second;
+   if(docorrection){
+    pt1w = jets_corr[njet-1].first;
+    eta1w = jets_corr[njet-1].second.first;
+    phi1w = jets_corr[njet-1].second.second.first;
+    trkmax1w = jets_corr[njet-1].second.second.second;
+   }
    if(njet>1){  
     pt2 = jets[njet-2].first;
     eta2 = jets[njet-2].second.first;
     phi2 = jets[njet-2].second.second.first;
     trkmax2 = jets[njet-2].second.second.second;
+	if(docorrection){
     pt2w = jets_corr[njet-2].first;
     eta2w = jets_corr[njet-2].second.first;
     phi2w = jets_corr[njet-2].second.second.first;
     trkmax2w = jets_corr[njet-2].second.second.second;
+	}
     if(njet>2){
      pt3 = jets[njet-3].first;
      eta3 = jets[njet-3].second.first;
      phi3 = jets[njet-3].second.second.first;
+	 if(docorrection){
      pt3w = jets_corr[njet-3].first;
      eta3w = jets_corr[njet-3].second.first;
      phi3w = jets_corr[njet-3].second.second.first;
+	 }
      }
    }
   }
@@ -197,13 +214,13 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
   }
 
   if ((fabs(eta1)<1.3 || fabs(eta2)<1.3) && dphi>phicut){
-  if(fabs(eta1)<1.3 && fabs(eta2)>1.3){
+  if(fabs(eta1)<1.3 && fabs(eta2)>=1.3){
    etaprobe = eta2; 
    etabarrel = eta1;
    ptprobe = pt2;
    ptbarrel = pt1;
   }
-  if(fabs(eta1)>1.3 && fabs(eta2)<1.3){
+  if(fabs(eta1)>=1.3 && fabs(eta2)<1.3){
    etaprobe = eta1;
    etabarrel = eta2;
    ptprobe = pt1;
