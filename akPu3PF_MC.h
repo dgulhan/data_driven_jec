@@ -210,8 +210,9 @@ public :
    TBranch        *b_gendphijt;   //!
    TBranch        *b_gendrjt;   //!
    TBranch        *b_gensubid;   //!
-   TFile *f;
-   akPu3PF_MC(TString infile="root://eoscms//eos/cms/store/caf/user/dgulhan/pPb/HP04/prod16/Hijing_Pythia_pt50/HiForest_v77_merged01/pt50_HP04_prod16_v77_merged_forest_0.root", char *algo="akPu3PF",TTree *tree=0);
+   TFile *f;   
+   // akPu3PF_MC(TString infile="root://eoscms//eos/cms/store/caf/user/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_JSonPPb_forestv77.root",TString algo="akPu3PF",TTree *tree=0);
+   akPu3PF_MC(TString infile="root://eoscms//eos/cms/store/caf/user/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_JSonPPb_forestv77.root",TString algo="akPu3PF",TTree *tree=0);
    virtual ~akPu3PF_MC();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -227,10 +228,10 @@ public :
 #endif
 
 #ifdef akPu3PF_MC_cxx
-akPu3PF_MC::akPu3PF_MC(TString infile, char *algo, TTree *tree)
+akPu3PF_MC::akPu3PF_MC(TString infile, TString algo, TTree *tree)
 {
    f = TFile::Open(infile);
-   tree = (TTree*) f->Get(Form("%sJetAnalyzer/t",algo));
+   tree = (TTree*) f->Get(Form("%sJetAnalyzer/t",algo.Data()));
    // tree = (TTree*) f->Get("ak3PFJetAnalyzer/t");
    // fhi = new HiTree(infile);
    // fhlt = new HltTree(infile);

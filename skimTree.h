@@ -27,7 +27,7 @@ public :
    Int_t           pat_step;
    Int_t           ana_step;
    Int_t           pcollisionEventSelection;
-   Int_t           pHBHENoiseFilter;
+   Int_t           HBHENoiseFilterResultRun2Loose;
    Int_t           phiEcalRecHitSpikeFilter;
    Int_t           pPAcollisionEventSelectionPA;
    Int_t           phfPosFilter3;
@@ -37,7 +37,7 @@ public :
    Int_t           phfPosFilter1;
    Int_t           phfNegFilter1;
    Int_t           phltPixelClusterShapeFilter;
-   Int_t           pprimaryvertexFilter;
+   Int_t           pPAprimaryVertexFilter;
    Int_t           pBeamScrapingFilter;
    Int_t           pVertexFilterCutG;
    Int_t           pVertexFilterCutGloose;
@@ -54,7 +54,7 @@ public :
    TBranch        *b_pat_step;   //!
    TBranch        *b_ana_step;   //!
    TBranch        *b_pcollisionEventSelection;   //!
-   TBranch        *b_pHBHENoiseFilter;   //!
+   TBranch        *b_HBHENoiseFilterResultRun2Loose;   //!
    TBranch        *b_phiEcalRecHitSpikeFilter;   //!
    TBranch        *b_pPAcollisionEventSelectionPA;   //!
    TBranch        *b_phfPosFilter3;   //!
@@ -64,7 +64,7 @@ public :
    TBranch        *b_phfPosFilter1;   //!
    TBranch        *b_phfNegFilter1;   //!
    TBranch        *b_phltPixelClusterShapeFilter;   //!
-   TBranch        *b_pprimaryvertexFilter;   //!
+   TBranch        *b_pPAprimaryVertexFilter;   //!
    TBranch        *b_pBeamScrapingFilter;   //!
    TBranch        *b_pVertexFilterCutG;   //!
    TBranch        *b_pVertexFilterCutGloose;   //!
@@ -147,7 +147,7 @@ void skimTree::Init(TTree *tree)
    fChain->SetBranchAddress("pat_step", &pat_step, &b_pat_step);
    fChain->SetBranchAddress("ana_step", &ana_step, &b_ana_step);
    fChain->SetBranchAddress("pcollisionEventSelection", &pcollisionEventSelection, &b_pcollisionEventSelection);
-   fChain->SetBranchAddress("pHBHENoiseFilter", &pHBHENoiseFilter, &b_pHBHENoiseFilter);
+   fChain->SetBranchAddress("HBHENoiseFilterResultRun2Loose", &HBHENoiseFilterResultRun2Loose, &b_HBHENoiseFilterResultRun2Loose);
    fChain->SetBranchAddress("phiEcalRecHitSpikeFilter", &phiEcalRecHitSpikeFilter, &b_phiEcalRecHitSpikeFilter);
    fChain->SetBranchAddress("pPAcollisionEventSelectionPA", &pPAcollisionEventSelectionPA, &b_pPAcollisionEventSelectionPA);
    fChain->SetBranchAddress("phfPosFilter3", &phfPosFilter3, &b_phfPosFilter3);
@@ -157,7 +157,7 @@ void skimTree::Init(TTree *tree)
    fChain->SetBranchAddress("phfPosFilter1", &phfPosFilter1, &b_phfPosFilter1);
    fChain->SetBranchAddress("phfNegFilter1", &phfNegFilter1, &b_phfNegFilter1);
    fChain->SetBranchAddress("phltPixelClusterShapeFilter", &phltPixelClusterShapeFilter, &b_phltPixelClusterShapeFilter);
-   fChain->SetBranchAddress("pprimaryvertexFilter", &pprimaryvertexFilter, &b_pprimaryvertexFilter);
+   fChain->SetBranchAddress("pPAprimaryVertexFilter", &pPAprimaryVertexFilter, &b_pPAprimaryVertexFilter);
    fChain->SetBranchAddress("pBeamScrapingFilter", &pBeamScrapingFilter, &b_pBeamScrapingFilter);
    fChain->SetBranchAddress("pVertexFilterCutG", &pVertexFilterCutG, &b_pVertexFilterCutG);
    fChain->SetBranchAddress("pVertexFilterCutGloose", &pVertexFilterCutGloose, &b_pVertexFilterCutGloose);

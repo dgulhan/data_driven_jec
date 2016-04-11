@@ -13,6 +13,7 @@
 #include <TFile.h>
 #include "HltTree.C"
 #include "HiTree.C"
+#include "EventTree.C"
 #include "skimTree.C"
 
 // Header file for the classes stored in the TTree if any.
@@ -161,7 +162,7 @@ public :
    TBranch        *b_matchedR;   //!
 
    // akPu3PF(TTree *tree=0,TString infile="root://eoscms//eos/cms/store/caf/user/yjlee/pp2013/promptReco/PP2013_HiForest_PromptReco_JsonPP_Jet80_JetDB_forestv78.root");
-   akPu3PF(TString infile="root://eoscms//eos/cms/store/caf/user/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_JSonPPb_forestv77.root",char *algo="akPu3PF",TTree *tree=0);
+   akPu3PF(TString infile="root://eoscms//eos/cms/store/caf/user/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_JSonPPb_forestv77.root",TString algo="akPu3PF",TTree *tree=0);
    // akPu3PF(TTree *tree=0,TString infile="root://eoscms//eos/cms/store/caf/user/dgulhan/pPb/HP04/prod16/Hijing_Pythia_pt50/HiForest_v77_merged01/pt50_HP04_prod16_v77_merged_forest_0.root");
    // akPu3PF(TTree *tree=0,TString infile="root://eoscms//eos/cms/store/caf/user/yjlee/PbPHiForest2_PbPbPAHighPtJet80_cent50-100_pprereco.root");
    virtual ~akPu3PF();
@@ -178,10 +179,10 @@ public :
 #endif
 
 #ifdef akPu3PF_cxx
-akPu3PF::akPu3PF(TString infile, char* algo,TTree *tree)
+akPu3PF::akPu3PF(TString infile, TString algo,TTree *tree)
 {
    TFile *f = TFile::Open(infile);
-   tree = (TTree*) f->Get(Form("%sJetAnalyzer/t",algo));
+   tree = (TTree*) f->Get(Form("%sJetAnalyzer/t",algo.Data()));
    // tree = (TTree*) f->Get("ak3PFJetAnalyzer/t");
    fhi = new HiTree(infile);
    fhlt = new HltTree(infile);

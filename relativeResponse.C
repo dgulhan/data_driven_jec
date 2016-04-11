@@ -6,7 +6,7 @@
 #include "TError.h"
 #include "TPad.h"
 #include "TString.h"
-#include "TRandom1.h"
+#include "TRandom3.h"
 #include "TH1F.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -25,39 +25,61 @@
 #include "plotFigure.C"
 #include "akPu3PF.C"
 
-void relativeResponse(){ 
+#include "L2L3ResidualWFits.h"
+
+void relativeResponse(TString dataset = "/mnt/hadoop/cms/store/user/abaty/transferTargetDirectories/2015pp_MinBias_2/", TString infile = "MinimumBias2_HiForestAOD_101.root", TString outfname = "test.root"){ 
 TH2D::SetDefaultSumw2(true);
 TH1D::SetDefaultSumw2();
 
-double etacut=3;
-double phicut=2.5;
-int docorrection =0;
-char *mode="Pbp";//"pPb","pp","Pbp";
-char *algo="ak3PF";
-TString infile;
-char *dataset="jet80";//jet80,MB;
-if(mode=="pPb" && dataset=="jet80") infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_JSonPPb_forestv77.root";
-if(mode=="pPb" && dataset=="jet40")infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_JSonPPb_forestv72_HLT40_HLT60.root";
-if(mode=="pPb" && dataset=="MB") infile="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_KrisztianMB_JSonPPb_forestv84.root";
-// TString infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pPb2013/promptReco/PA2013_HiForest_PromptReco_KrisztianMB_JSonPPb_forestv84.root";
-if(mode=="pp" && dataset=="jet40") infile ="root://eoscms//eos/cms/store/group/phys_heavyions/yjlee/pp2013/promptReco/PP2013_HiForest_PromptReco_JSon_Jet40Jet60_ppTrack_forestv84.root";
-if(mode=="pp" && dataset=="MB") infile ="root://eoscms//eos/cms/store/group/phys_heavyions/dgulhan/pp_minbiasSkim_forest_53x_2013-08-15-0155/pp_minbiasSkim_forest_53x_2013-08-15-0155.root";
-if(mode=="pp" && dataset=="jet80") infile ="root://eoscms//eos/cms/store/caf/user/yjlee//pp2013/promptReco/PP2013_HiForest_PromptReco_JsonPP_Jet80_PPReco_forestv82.root";
-if(mode=="Pbp" && dataset=="jet80")infile ="/d100/yjlee/hiForest2PPb/promptReco/Jet-Pbp-v84-JECdb/output.root";
-
-HiTree   *fhi = new HiTree(infile.Data());
-HltTree   *fhlt = new HltTree(infile.Data());
-skimTree   *fskim = new skimTree(infile.Data());
-akPu3PF *t = new akPu3PF(infile.Data(),algo);
+int radius = 3; 
+float etacut = 3;
+float cutband = 0.0;
+float etacutcorr = etacut;
+bool doShift = true;
+float shift = -0.465;
+if(doShift){
+ etacutcorr = 4;
+ shift = -0.465;
+}
+float phicut = 2.5;
+int docorrection = 1;
+TString mode="pp";//"pPb","pp","Pbp";
+TString algo=Form("ak%dPF",radius);
+TString infname = Form("%s/%s",dataset.Data(), infile.Data());
+L2L3Residual * L2L3Corr = new L2L3Residual(radius,((int)etacutcorr));
+HiTree   *fhi = new HiTree(infname.Data()); 
+HltTree   *fhlt = new HltTree(infname.Data());
+skimTree   *fskim = new skimTree(infname.Data());
+akPu3PF *t = new akPu3PF(infname.Data(),algo);
 
 TFile * fcrel3;
 TH1D * C_rel;
-if(docorrection){
+
+TFile *fileResJESSys[3];
+TH1D *histJESVar[3];
+TString corrstring[] = {"pt55_75_lowerpt","pt75_100_jet60","pt100_400_jet80"};
+if(etacutcorr==4){
+ for(int ifile = 0; ifile < 3; ifile++){
+  fileResJESSys[ifile] = new TFile(Form("Casym_pp_hcalbins4_algo_ak3PF_%s_corrv5_eta4_alphahigh_20_phicut250_etacut4.root",corrstring[ifile].Data()));
+  histJESVar[ifile] = (TH1D*)fileResJESSys[ifile]->Get("R_data_MC_corr");
+ }
+}
+if(etacutcorr==3){
+ for(int ifile = 0; ifile < 3; ifile++){
+  fileResJESSys[ifile] = new TFile(Form("Casym_pp_hcalbins_algo_ak3PF_%s_corrv5_eta3_alphahigh_20_phicut250_etacut0.root",corrstring[ifile].Data()));
+  histJESVar[ifile] = (TH1D*)fileResJESSys[ifile]->Get("R_data_MC_corr");
+ }
+}
+
+if(0){
  if(etacut==3 && mode=="pPb" && algo=="akPu3PF") fcrel3 = new TFile("Corrections/Casym_pPb_double_hcalbins_algo_akPu3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
  if(etacut==3 && mode=="pPb" && algo=="ak3PF") fcrel3 = new TFile("Corrections/Casym_pPb_double_hcalbins_algo_ak3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
  if(etacut==4 && mode=="pPb")fcrel3 = new TFile("Corrections/Casym_eta4.root");
- if(etacut==3 && mode=="pp" && algo=="ak3PF")fcrel3 = new TFile("Corrections/Casym_pp_double_hcalbins_algo_ak3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
+ if(etacut==3 && mode=="pp" && algo=="ak3PF")fcrel3 = new TFile("Casym_pp_double_hcalbins_algo_ak3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
  if(etacut==3 && mode=="pp" && algo=="akPu3PF")fcrel3 = new TFile("Corrections/Casym_pp_double_hcalbins_algo_akPu3PF_pt100_140_jet80_alphahigh_20_phicut250.root");
+ if(etacut==3 && mode=="pp" && algo=="AK4PF") fcrel3 = new TFile("Casym_pp_double_hcalbins_algo_AK4PF_pt100_140_jet80_alphahigh_20_phicut250.root");
+ if(etacut==3 && mode=="pp" && algo=="ak4PF") fcrel3 = new TFile("Casym_pp_double_hcalbins_algo_ak4PF_pt100_140_jet80_alphahigh_20_phicut250.root");
+ if(etacut==3 && mode=="pp" && algo=="ak5PF") fcrel3 = new TFile("Casym_pp_double_hcalbins_algo_ak5PF_pt100_140_jet80_alphahigh_20_phicut250.root");
  C_rel=(TH1D*)fcrel3->Get("C_asym");
 }
 
@@ -73,22 +95,27 @@ if(algo=="akPu3PF"){
 }
 
 int nentries = t->GetEntriesFast();
-cout<<"nentries = "<<nentries<<endl;
+std::cout<<"nentries = "<<nentries<<std::endl;
 
-string jetVars="";
-string dijetVars = "";
+TString jetVars="";
+TString dijetVars = "";
+TString debugVars = "";
 
+debugVars += "jtpt1:jteta1:trkMax1:trkSum1:chargedN1:rawpt1:eSum1";
 jetVars+= "jtpt:jteta:jtphi";
 dijetVars += "jtpt1:jteta1:jtphi1:jtpt2:jteta2:jtphi2:jtpt3:jteta3:jtphi3:dphi"
      ":trkMax1:trkMax2"
      ":ptAverage:ptBarrel:ptProbe:etaBarrel:etaProbe:alpha:hfsum:hfp:hfm:zdcp:zdcm:B"
-     ":hcalnoise:pileupfilter:jet40:jet60:jet80:jet100:vz:vx:vy:hasPForwardjet:hasMForwardjet";
-TFile * fnt = new TFile(Form("ntuples/ntuple_relativeResponse_%s_eta%d_corrected%d_%s_%s.root",mode,(int)etacut,docorrection,dataset,algo),"recreate");
+     ":hcalnoise:pileupfilter:jet40:presjet40:jet60:presjet60:jet80:jet100:vz:vx:vy:hasPForwardjet:hasMForwardjet:random:jtpt1up:jtpt1down:jtpt2up:jtpt2down";
+TFile * fnt = new TFile(outfname.Data(),"recreate");
+
 // TFile * fnt = new TFile("ntuples/ntuple_relativeResponse_pPb_eta3_corrected_jet100_Jun03.root","recreate");
 
-TNtuple *ntdijet = new TNtuple("ntdijet","",dijetVars.data());
-TNtuple *ntjet = new TNtuple("ntjet","",jetVars.data());
-TNtuple *ntdijet_corr = new TNtuple("ntdijet_corr","",dijetVars.data());
+TNtuple *ntdijet = new TNtuple("ntdijet","",dijetVars.Data());
+TNtuple *ntjet = new TNtuple("ntjet","",jetVars.Data());
+TNtuple *ntdijet_corr = new TNtuple("ntdijet_corr","",dijetVars.Data());
+TNtuple *ntdebug = new TNtuple("ntdebug","",debugVars.Data());
+TRandom3 *r = new TRandom3();
 
 for (Long64_t jentry=0; jentry<nentries;jentry++) {
 // for (Long64_t jentry=0; jentry<1000;jentry++) {
@@ -96,9 +123,7 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
   fhi->GetEntry(jentry);
   fhlt->GetEntry(jentry);
   fskim->GetEntry(jentry);
-
-  if(!(fskim->pHBHENoiseFilter && fskim->pPAcollisionEventSelectionPA && fabs(fhi->vz)<15 && fskim->pVertexFilterCutGplus && fskim->pprimaryvertexFilter)) continue;
-
+  if(!(fskim->HBHENoiseFilterResultRun2Loose && fskim->pPAprimaryVertexFilter && fabs(fhi->vz)<15 && fskim->pBeamScrapingFilter)) continue;
   if(mode=="pPb" && fhi->run>211256) continue;
   if(mode=="Pbp" && fhi->run<=211256) continue;
   // if(fhi->run>210658) continue;
@@ -107,112 +132,139 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
   bool hasMForwardjet=false;
   bool hasPForwardjet=false;
 
-  double pt1=-99;
-  double pt2=-99;  
-  double pt3=-99;
-  double eta1=-99;
-  double eta2=-99;  
-  double eta3=-99;  
-  double phi1=-99;
-  double phi2=-99;
-  double phi3=-99;
-  double dphi=-99;
-  double trkmax1 = -99;
-  double trkmax2 = -99;
-  double ptprobe=-99;
-  double ptbarrel=-99;
-  double etaprobe=-99;
-  double etabarrel=-99;
+  float pt1=-99;
+  float pt2=-99;  
+  float pt3=-99;
+  float eta1=-99;
+  float eta2=-99;  
+  float eta3=-99;  
+  float phi1=-99;
+  float phi2=-99;
+  float phi3=-99;
+  float dphi=-99;
+  float trkmax1 = -99;
+  float trkSum1 = -99;
+  float chargedN1 = -99;
+  float rawpt1 = -99;
+  float eSum1 = -99;
+  float trkmax2 = -99;
+  float ptprobe=-99;
+  float ptbarrel=-99;
+  float etaprobe=-99;
+  float etabarrel=-99;
   bool hasleading = false; 
   bool hassubleading = false;
-  double ptaverage = -99;
+  float ptaverage = -99;
   
-  double pt1w=-99;
-  double pt2w=-99;
-  double pt3w=-99;
-  double phi1w=-99;
-  double phi2w=-99;
-  double phi3w=-99;
-  double dphiw=-99;
-  double eta1w=-99;
-  double eta2w=-99;
-  double eta3w=-99;
-  double ptprobew=-99;
-  double etaprobew=-99;
-  double ptbarrelw=-99;
-  double etabarrelw=-99;
-  double trkmax1w=-99;
-  double trkmax2w=-99;
+  float pt1wup=-99;
+  float pt2wup=-99;
+  float pt1wdown=-99;
+  float pt2wdown=-99;
+  float pt1w=-99;
+  float pt2w=-99;
+  float pt3w=-99;
+  float phi1w=-99;
+  float phi2w=-99;
+  float phi3w=-99;
+  float dphiw=-99;
+  float eta1w=-99;
+  float eta2w=-99;
+  float eta3w=-99;
+  float ptprobew=-99;
+  float etaprobew=-99;
+  float ptbarrelw=-99;
+  float etabarrelw=-99;
+  float trkmax1w=-99;
+  float trkmax2w=-99;
   bool hasleadingw=-99;
   bool hassubleadingw=-99;
-  double ptaveragew=-99;
+  float ptaveragew=-99;
   
-  std::vector<std::pair<double, std::pair<double, std::pair<double,double> > > > jets;
-  std::vector<std::pair<double, std::pair<double, std::pair<double,double> > > > jets_corr;
+  std::vector<std::pair<float, std::pair<float, std::pair<float,std::pair<float,std::pair<float,std::pair<float,std::pair<float,float> > > > > > > > jets;
+  std::vector<std::pair<float, std::pair<float, std::pair<float,float> > > > jets_corr;
+  std::vector<std::pair<float, std::pair<float, std::pair<float,float> > > > rawjets;
   int njet = 0;
   
   for(int ijet=0;ijet<t->nref;ijet++){
-   if(t->jteta[ijet]<-3) hasMForwardjet =true;
-   if(t->jteta[ijet]>3) hasPForwardjet =true;
-   if(fabs(t->jteta[ijet])>3) continue;
-   if(t->rawpt[ijet]<15) continue;
+   float jteta = t->jteta[ijet];
+   if(jteta<-3) hasMForwardjet =true;
+   if(jteta>3) hasPForwardjet =true;
+   if(fabs(jteta+shift)>etacut-cutband) continue;
+   // if(t->rawpt[ijet]<15) continue;
 
    njet++;
-   cout<<"event with jet"<<njet<<endl;
-   double correctedpt = (f->Eval(t->jtpt[ijet]))*t->jtpt[ijet];
-   jets.push_back(std::make_pair(correctedpt,std::make_pair(t->jteta[ijet], std::make_pair(t->jtphi[ijet],t->trackMax[ijet]))));
-   double corr;
+   // std::cout<<"event with jet"<<njet<<std::endl;
+   float correctedpt = t->jtpt[ijet];
+   jets.push_back(std::make_pair(correctedpt,std::make_pair(jteta, std::make_pair(t->jtphi[ijet], std::make_pair(t->trackMax[ijet], std::make_pair(t->trackSum[ijet], std::make_pair(t->chargedN[ijet], std::make_pair(t->rawpt[ijet],t->eSum[ijet]))))))));
+   rawjets.push_back(std::make_pair(t->rawpt[ijet],std::make_pair(jteta, std::make_pair(t->jtphi[ijet],t->trackMax[ijet]))));
+
+   float corr;
    if(docorrection){
-    corr = C_rel->GetBinContent(C_rel->FindBin(t->jteta[ijet]));
-    correctedpt = correctedpt*corr;
-    jets_corr.push_back(std::make_pair(correctedpt,std::make_pair(t->jteta[ijet], std::make_pair(t->jtphi[ijet],t->trackMax[ijet]))));
+    correctedpt = L2L3Corr->get_corrected_pt(correctedpt, jteta);
+    jets_corr.push_back(std::make_pair(correctedpt,std::make_pair(jteta, std::make_pair(t->jtphi[ijet],t->trackMax[ijet]))));
    }
-   ntjet->Fill(correctedpt,t->jteta[ijet],t->jtphi[ijet]);
+   ntjet->Fill(correctedpt,jteta,t->jtphi[ijet]);
   }
-  // cout<<njet<<endl;
   if(njet != 0){
-   std::sort(jets.begin(),jets.end());
-   std::sort(jets_corr.begin(),jets_corr.end());
+   std::sort(jets.begin(),jets.end()); 
+   std::sort(jets_corr.begin(),jets_corr.end()); 
 
    pt1 = jets[njet-1].first;
-   eta1 = jets[njet-1].second.first;
+   eta1 = jets[njet-1].second.first+shift;
    phi1 = jets[njet-1].second.second.first;
-   trkmax1 = jets[njet-1].second.second.second;
+   trkmax1 = jets[njet-1].second.second.second.first;
+   trkSum1 = jets[njet-1].second.second.second.second.first;
+   chargedN1 = jets[njet-1].second.second.second.second.second.first;
+   rawpt1 = jets[njet-1].second.second.second.second.second.second.first;
+   eSum1 = jets[njet-1].second.second.second.second.second.second.second;
    if(docorrection){
     pt1w = jets_corr[njet-1].first;
-    eta1w = jets_corr[njet-1].second.first;
+    eta1w = jets_corr[njet-1].second.first+shift;
+	int ifile = 0;
+	if(pt1w < 85) ifile = 0;
+	if(pt1w > 85 && pt1w < 100) ifile = 1;
+	if(pt1w > 100 && pt1w < 400) ifile = 2;
+	pt1wup = (sqrt(pow(fabs(histJESVar[ifile]->GetBinContent(histJESVar[ifile]->FindBin(eta1w-shift))-1),2)+0.02*0.02)+1)*pt1w;
+	pt1wdown = (1-sqrt(pow(fabs(histJESVar[ifile]->GetBinContent(histJESVar[ifile]->FindBin(eta1w-shift))-1),2)+0.02*0.02))*pt1w;
     phi1w = jets_corr[njet-1].second.second.first;
     trkmax1w = jets_corr[njet-1].second.second.second;
    }
    if(njet>1){  
     pt2 = jets[njet-2].first;
-    eta2 = jets[njet-2].second.first;
+    eta2 = jets[njet-2].second.first+shift;
     phi2 = jets[njet-2].second.second.first;
-    trkmax2 = jets[njet-2].second.second.second;
+    trkmax2 = jets[njet-2].second.second.second.first;
 	if(docorrection){
     pt2w = jets_corr[njet-2].first;
-    eta2w = jets_corr[njet-2].second.first;
+    eta2w = jets_corr[njet-2].second.first+shift;
+	int ifile = 0;
+	if(pt2w < 85) ifile = 0;
+	if(pt2w > 85 && pt2w < 100) ifile = 1;
+	if(pt2w > 100 && pt2w < 400) ifile = 2;
+	pt2wup = (sqrt(pow(fabs(histJESVar[ifile]->GetBinContent(histJESVar[ifile]->FindBin(eta2w-shift))-1),2)+0.02*0.02)+1)*pt2w;
+	pt2wdown = (1-sqrt(pow(fabs(histJESVar[ifile]->GetBinContent(histJESVar[ifile]->FindBin(eta2w-shift))-1),2)+0.02*0.02))*pt2w;
     phi2w = jets_corr[njet-2].second.second.first;
     trkmax2w = jets_corr[njet-2].second.second.second;
 	}
     if(njet>2){
      pt3 = jets[njet-3].first;
-     eta3 = jets[njet-3].second.first;
+     eta3 = jets[njet-3].second.first+shift;
      phi3 = jets[njet-3].second.second.first;
 	 if(docorrection){
      pt3w = jets_corr[njet-3].first;
-     eta3w = jets_corr[njet-3].second.first;
+     eta3w = jets_corr[njet-3].second.first+shift;
      phi3w = jets_corr[njet-3].second.second.first;
 	 }
      }
    }
   }
-
+  
   if(njet>=2){
    dphi = acos(cos(phi1-phi2));
    dphiw = acos(cos(phi1w-phi2w));
   }
-
+  
+  float randnum = -99;
   if ((fabs(eta1)<1.3 || fabs(eta2)<1.3) && dphi>phicut){
   if(fabs(eta1)<1.3 && fabs(eta2)>=1.3){
    etaprobe = eta2; 
@@ -227,9 +279,10 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
    ptbarrel = pt2;
   }
   if(fabs(eta1)<1.3 && fabs(eta2)<1.3){
-   TRandom1 *r = new TRandom1();
-   double random = r->Rndm();
-   // cout<<random<<endl;
+   float random = r->Rndm();
+   randnum = random;
+   // std::cout<<random<<std::endl;
+   // if(random>0.47){
    if(random>0.5){
     etaprobe = eta1;
     etabarrel = eta2;
@@ -244,6 +297,7 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
   }
   }
   ptaverage = (ptbarrel+ptprobe)/2;
+  float randnumw = -99;
 
   if(docorrection){
     if ((fabs(eta1w)<1.3 || fabs(eta2w)<1.3) && dphiw>phicut){
@@ -260,9 +314,10 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
       ptbarrelw = pt2w;
      }
      if(fabs(eta1w)<1.3 && fabs(eta2w)<1.3){
-      TRandom1 *r = new TRandom1();
-      double random = r->Rndm();
-      // cout<<random<<endl;
+      float random = r->Rndm();
+	  randnumw = random;
+      // std::cout<<random<<std::endl;
+      // if(random>0.47){
       if(random>0.5){
        etaprobew = eta1w;
        etabarrelw = eta2w;
@@ -279,14 +334,24 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
     ptaveragew =(ptprobew+ptbarrelw)/2;	
   }
 
-  float dijetEntry[]={pt1,eta1,phi1,pt2,eta2,phi2,pt3,eta3,phi3,dphi,trkmax1,trkmax2,ptaverage,ptbarrel,ptprobe,etabarrel,etaprobe,(pt3/ptaverage),fhi->hiHFplusEta4 + fhi->hiHFminusEta4,fhi->hiHFplusEta4,fhi->hiHFminusEta4,fhi->hiZDCminus,fhi->hiZDCplus,(ptprobe-ptbarrel)/ptaverage,fskim->pHBHENoiseFilter,fskim->pVertexFilterCutGplus,fhlt->HLT_PAJet40_NoJetID_v1,fhlt->HLT_PAJet60_NoJetID_v1,fhlt->HLT_PAJet80_NoJetID_v1,fhlt->HLT_PAJet100_NoJetID_v1,fhi->vz,fhi->vx,fhi->vy,hasPForwardjet,hasMForwardjet};
-  float dijetEntry_corr[] = {pt1w,eta1w,phi1w,pt2w,eta2w,phi2w,pt3w,eta3w,phi3w,dphiw,trkmax1w,trkmax2w,ptaveragew,ptbarrelw,ptprobew,etabarrelw,etaprobew,pt3w/ptaveragew,fhi->hiHFplusEta4 + fhi->hiHFminusEta4,fhi->hiHFplusEta4,fhi->hiHFminusEta4,fhi->hiZDCminus,fhi->hiZDCplus,(ptprobew-ptbarrelw)/ptaveragew,fskim->pHBHENoiseFilter,fskim->pVertexFilterCutGplus,fhlt->HLT_PAJet40_NoJetID_v1,fhlt->HLT_PAJet60_NoJetID_v1,fhlt->HLT_PAJet80_NoJetID_v1,fhlt->HLT_PAJet100_NoJetID_v1,fhi->vz,fhi->vx,fhi->vy,hasPForwardjet,hasMForwardjet};
+  float dijetEntry[]={pt1,eta1,phi1,pt2,eta2,phi2,pt3,eta3,phi3,dphi,trkmax1,trkmax2,ptaverage,ptbarrel,ptprobe,etabarrel,etaprobe,(pt3/ptaverage),fhi->hiHFplusEta4 + fhi->hiHFminusEta4,fhi->hiHFplusEta4,fhi->hiHFminusEta4,fhi->hiZDCminus,fhi->hiZDCplus,(ptprobe-ptbarrel)/ptaverage,(float)(fskim->HBHENoiseFilterResultRun2Loose),(float)(fskim->pVertexFilterCutGplus),(float)(fhlt->HLT_AK4PFJet40_Eta5p1_v1),(float)(fhlt->HLT_AK4PFJet40_Eta5p1_v1_Prescl*fhlt->L1_SingleJet28_BptxAND_Prescl*fhlt->L1_SingleJet28_BptxAND_Prescl),(float)(fhlt->HLT_AK4PFJet60_Eta5p1_v1*fhlt->L1_SingleJet40_BptxAND_Prescl),(float)(fhlt->HLT_AK4PFJet60_Eta5p1_v1_Prescl*fhlt->L1_SingleJet40_BptxAND_Prescl),(float)(fhlt->HLT_AK4PFJet80_Eta5p1_v1),(float)(fhlt->HLT_AK4PFJet100_Eta5p1_v1),fhi->vz,fhi->vx,fhi->vy,(float)hasPForwardjet,(float)hasMForwardjet,randnum};
+  float dijetEntry_corr[] = {pt1w,eta1w,phi1w,pt2w,eta2w,phi2w,pt3w,eta3w,phi3w,dphiw,trkmax1w,trkmax2w,ptaveragew,ptbarrelw,ptprobew,etabarrelw,etaprobew,pt3w/ptaveragew,fhi->hiHFplusEta4 + fhi->hiHFminusEta4,fhi->hiHFplusEta4,fhi->hiHFminusEta4,fhi->hiZDCminus,fhi->hiZDCplus,(ptprobew-ptbarrelw)/ptaveragew,(float)(fskim->HBHENoiseFilterResultRun2Loose),(float)(fskim->pVertexFilterCutGplus),(float)(fhlt->HLT_AK4PFJet40_Eta5p1_v1),(float)(fhlt->HLT_AK4PFJet40_Eta5p1_v1_Prescl*fhlt->L1_SingleJet28_BptxAND_Prescl),(float)(fhlt->HLT_AK4PFJet60_Eta5p1_v1),(float)(fhlt->HLT_AK4PFJet60_Eta5p1_v1_Prescl*fhlt->L1_SingleJet40_BptxAND_Prescl),(float)(fhlt->HLT_AK4PFJet80_Eta5p1_v1),(float)(fhlt->HLT_AK4PFJet100_Eta5p1_v1),fhi->vz,fhi->vx,fhi->vy,(float)hasPForwardjet,(float)hasMForwardjet,randnumw,pt1wup,pt1wdown,pt2wup,pt2wdown};
   ntdijet->Fill(dijetEntry);
   ntdijet_corr->Fill(dijetEntry_corr);
+  ntdebug->Fill(pt1,eta1,trkmax1,trkSum1,chargedN1,rawpt1,eSum1);
+
 }
 
 ntdijet->Write();
 ntjet->Write();
 ntdijet_corr->Write();
+ntdebug->Write();
 fnt->Close();
+}
+
+
+int main(int argc, char *argv[])
+{ 
+  relativeResponse(argv[1],argv[2],argv[3]);
+  return 0;
 }
