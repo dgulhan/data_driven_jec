@@ -39,7 +39,7 @@ void test(){
   double jteta = 0.;
   double correctedPt = jtpt;
   bool doMC = false;
-  if(mode == "pPb5" || mode == "Pbp5") correctedPt = MCTruth->getJEC_1st(correctedPt,rawpt,jteta); 
+  if(mode == "pPb5" || mode == "Pbp5") correctedPt = MCTruth->getJEC_1st(rawpt,correctedPt,jteta); 
   correctedPt = MCTruth->getResidualCorr(correctedPt,jteta);
   cout << "after MC correction jtpt = " << correctedPt << endl;
   if(!doMC){
